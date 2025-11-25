@@ -15,7 +15,7 @@ public class GenerateController {
     @PostMapping("/generate")
     public ResponseEntity<?> generate(@RequestBody Map<String, String> request) {
         String message = request.getOrDefault("message", "Hello, World!");
-        String modelId = "gemini-2.5-flash";
+        String modelId = "gemini-3-pro-preview";
 
         Client client = new Client();
 
