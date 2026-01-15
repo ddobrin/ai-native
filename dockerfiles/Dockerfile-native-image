@@ -1,0 +1,9 @@
+FROM bellsoft/liberica-native-image-kit-container:jdk-25-nik-25-musl as builder
+WORKDIR /app
+ADD . /app/ai-native
+RUN cd ai-native && ./mvnw -Pnative native:compile
+
+FROM bellsoft/alpaquita-linux-base:musl
+WORKDIR /app
+ENTRYPOINT ["/app/app"]
+COPY --from=builder /app/ai-native/target/ai-native /app/app

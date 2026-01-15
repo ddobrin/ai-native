@@ -1,0 +1,10 @@
+FROM bellsoft/hardened-liberica-runtime-container:jdk-25-musl as builder
+WORKDIR /app
+ADD . /app/ai-native
+RUN cd ai-native && ./mvnw clean package
+
+FROM bellsoft/hardened-liberica-runtime-container:jre-25-musl
+WORKDIR /app
+COPY --from=builder /app/ai-native/target/ai-native-*.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java","-jar","/app/app.jar"]
