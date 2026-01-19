@@ -1,0 +1,24 @@
+FROM bellsoft/liberica-runtime-container:jdk-25-cds-musl as builder
+WORKDIR /app
+ADD . /app/ai-native
+RUN cd ai-native && ./mvnw clean package
+
+FROM bellsoft/liberica-runtime-container:jre-25-cds-musl as optimizer
+WORKDIR /app
+COPY --from=builder /app/ai-native/target/ai-native-*.jar app.jar
+RUN java -Djarmode=tools -jar /app/app.jar extract --layers --destination extracted
+
+FROM bellsoft/liberica-runtime-container:jre-25-cds-slim-musl
+
+WORKDIR /app
+ENTRYPOINT ["java", "-Dspring.aot.enabled=true", "-XX:AOTCache=app.aot", "-jar", "/app/app.jar"]
+COPY --from=optimizer /app/extracted/dependencies/ ./
+COPY --from=optimizer /app/extracted/spring-boot-loader/ ./
+COPY --from=optimizer /app/extracted/snapshot-dependencies/ ./
+COPY --from=optimizer /app/extracted/application/ ./
+EXPOSE 8080
+
+RUN java -Dspring.aot.enabled=true \
+         -XX:AOTCacheOutput=app.aot \
+         -Dspring.context.exit=onRefresh \
+         -jar /app/app.jar
